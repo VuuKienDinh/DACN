@@ -1,0 +1,228 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\DoAnChuyenNganh\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\controllers\\clothingimagescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\controllers\\clothingimagescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\wwwroot\\uploads.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\wwwroot\\uploads.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\controllers\\clothingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\controllers\\clothingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\repositories\\clothingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\repositories\\clothingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\repositories\\iclothingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\repositories\\iclothingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\models\\clothingitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\models\\clothingitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\dtos\\clothingrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\dtos\\clothingrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|d:\\doanchuyennganh\\doanchuyennganh\\doanchuyennganh.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{260EBAAC-73E4-41EF-9A3E-6744A3A1326C}|DoAnChuyenNganh\\DoAnChuyenNganh.csproj|solutionrelative:doanchuyennganh\\doanchuyennganh.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ClothingImagesController.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Controllers\\ClothingImagesController.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Controllers\\ClothingImagesController.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Controllers\\ClothingImagesController.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Controllers\\ClothingImagesController.cs",
+              "ViewState": "AgIAAEoAAAAAAAAAAAAowGUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T17:47:14.709Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "uploads.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\wwwroot\\uploads.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\wwwroot\\uploads.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\wwwroot\\uploads.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\wwwroot\\uploads.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T17:45:00.131Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ClothingController.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Controllers\\ClothingController.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Controllers\\ClothingController.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Controllers\\ClothingController.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Controllers\\ClothingController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T15:12:55.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ClothingRepository.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Repositories\\ClothingRepository.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Repositories\\ClothingRepository.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Repositories\\ClothingRepository.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Repositories\\ClothingRepository.cs",
+              "ViewState": "AgIAACgAAAAAAAAAAAAkwD4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T15:11:58.272Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IClothingRepository.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Repositories\\IClothingRepository.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Repositories\\IClothingRepository.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Repositories\\IClothingRepository.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Repositories\\IClothingRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T15:11:13.024Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "ClothingRequestDto.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\DTOs\\ClothingRequestDto.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\DTOs\\ClothingRequestDto.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\DTOs\\ClothingRequestDto.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\DTOs\\ClothingRequestDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T15:07:58.658Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "20261028144927_InitialCreate.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Migrations\\20261028144927_InitialCreate.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T14:49:27.405Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T14:47:36.892Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "ClothingItem.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Models\\ClothingItem.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Models\\ClothingItem.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Models\\ClothingItem.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Models\\ClothingItem.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAADwvx4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T14:45:15.955Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\appsettings.json",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\appsettings.json",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\appsettings.json",
+              "RelativeToolTip": "DoAnChuyenNganh\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-10-28T14:33:09.835Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "DoAnChuyenNganh",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\DoAnChuyenNganh.csproj",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\DoAnChuyenNganh.csproj",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\DoAnChuyenNganh.csproj",
+              "RelativeToolTip": "DoAnChuyenNganh\\DoAnChuyenNganh.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-10-28T14:31:44.015Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Program.cs",
+              "RelativeDocumentMoniker": "DoAnChuyenNganh\\Program.cs",
+              "ToolTip": "D:\\DoAnChuyenNganh\\DoAnChuyenNganh\\Program.cs",
+              "RelativeToolTip": "DoAnChuyenNganh\\Program.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAYwCcAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-28T14:22:19.9Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
