@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
 import '../services/clothing_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/clothing_card.dart';
+import '../widgets/state_views.dart';
 import 'add_clothing_screen.dart';
 
 class WardrobeScreen extends StatefulWidget {
@@ -15,13 +15,11 @@ class WardrobeScreen extends StatefulWidget {
 }
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
-  final TextEditingController _searchController =
-  TextEditingController();
-
+  final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Tất cả';
+  bool _isLoading = false;
 
-
-  final List<String> _categories = [
+  static const List<String> _categories = [
     'Tất cả',
     'Áo',
     'Áo khoác',
@@ -36,6 +34,17 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     'Phụ kiện',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          ClothingService.instance.items.value.isEmpty &&
+          ClothingService.instance.syncStatus.value == BackendSyncStatus.idle) {
+        _loadClothes();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -43,96 +52,16 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     super.dispose();
   }
 
-  Future<void> _deleteClothing(ClothingItem item) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa quần áo'),
-        content: Text(
-          'Bạn có chắc muốn xóa "${item.name}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, false);
-            },
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, true);
-            },
-            child: const Text(
-              'Xóa',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-
-
-    if (confirm == true) {
-      try {
-        await ClothingService.instance
-            .deleteClothing(item.id);
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xóa quần áo thành công'),
-          ),
-        );
-      } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Không thể xóa quần áo: $e'),
-          ),
-        );
-      }
-    }
-
-  }
-
-
-  Future<void> _openAddClothing() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const AddClothingScreen(),
-      ),
-    );
-
-    if (!mounted) return;
-
-    await _loadClothes();
-  }
-
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadClothes();
-  }
-
   Future<void> _loadClothes() async {
     setState(() {
       _isLoading = true;
     });
-
     try {
       await ClothingService.instance.loadClothes();
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không thể tải tủ đồ: $e'),
-        ),
+        SnackBar(content: Text('Không thể tải tủ đồ: $e')),
       );
     } finally {
       if (mounted) {
@@ -143,94 +72,213 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     }
   }
 
+  Future<void> _deleteClothing(ClothingItem item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        title: const Text('Xóa trang phục'),
+        content: Text('Bạn có chắc muốn xóa "${item.name}" khỏi tủ đồ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(
+              'Xóa',
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ClothingService.instance.deleteClothing(item.id);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Đã xóa "${item.name}"')),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể xóa quần áo: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _openAddClothing() async {
+    final added = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const AddClothingScreen()),
+    );
+    if (added == true && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Tủ quần áo',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-      ),
-      body: ValueListenableBuilder<List<ClothingItem>>(
-        valueListenable: ClothingService.instance.items,
-        builder: (context, items, child) {
-          final keyword =
-          _searchController.text.trim().toLowerCase();
+    final service = ClothingService.instance;
+
+    return SafeArea(
+      bottom: false,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          service.items,
+          service.syncStatus,
+          service.statusMessage,
+        ]),
+        builder: (context, _) {
+          final items = service.items.value;
+          final keyword = _searchController.text.trim().toLowerCase();
 
           final filteredItems = items.where((item) {
-            final matchesName =
-            item.name.toLowerCase().contains(keyword);
+            final matchesKeyword = keyword.isEmpty ||
+                item.name.toLowerCase().contains(keyword) ||
+                item.color.toLowerCase().contains(keyword) ||
+                item.style.toLowerCase().contains(keyword);
 
-            final matchesCategory =
-                _selectedCategory == 'Tất cả' ||
-                    item.type == _selectedCategory;
+            final matchesCategory = _selectedCategory == 'Tất cả' ||
+                item.type == _selectedCategory;
 
-            return matchesName && matchesCategory;
+            return matchesKeyword && matchesCategory;
           }).toList();
+
+          final isConnected =
+              service.syncStatus.value == BackendSyncStatus.connected;
 
           return Column(
             children: [
               if (_isLoading)
                 const LinearProgressIndicator(
+                  minHeight: 2.5,
                   color: AppColors.primary,
                 ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  20, 12, 20, 10,
-                ),
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${items.length} món đồ trong tủ',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
+                    // Header Tủ đồ + Nút thêm nhanh
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tủ đồ của tôi',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.text,
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${items.length} món đồ · ${isConnected ? "Đã kết nối SQL Server" : "Lưu cục bộ & Mẫu thử"}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Đồng bộ lại',
+                          onPressed: _isLoading ? null : _loadClothes,
+                          icon: const Icon(
+                            Icons.sync_rounded,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _openAddClothing,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 11,
+                            ),
+                          ),
+                          icon: const Icon(Icons.add_rounded, size: 19),
+                          label: const Text('Thêm đồ'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
 
+                    const SizedBox(height: 12),
+
+                    // Ô tìm kiếm kính mờ
                     TextField(
                       controller: _searchController,
-                      onChanged: (_) {
-                        setState(() {});
-                      },
+                      onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
-                        hintText: 'Tìm kiếm quần áo...',
-                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Tìm theo tên, màu sắc hoặc phong cách...',
+                        hintStyle: const TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.textMuted,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                              ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.white.withValues(alpha: 0.9),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 13,
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.14),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
 
+                    const SizedBox(height: 12),
+
+                    // Thanh lọc loại trang phục
                     SizedBox(
-                      height: 42,
+                      height: 40,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _categories.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           final category = _categories[index];
-                          final isSelected =
-                              category == _selectedCategory;
-
+                          final isSelected = category == _selectedCategory;
                           return ChoiceChip(
                             label: Text(category),
                             selected: isSelected,
-                            selectedColor: AppColors.sage,
                             onSelected: (_) {
                               setState(() {
                                 _selectedCategory = category;
@@ -244,70 +292,72 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
               ),
 
+              // Danh sách lưới trang phục
               Expanded(
                 child: filteredItems.isEmpty
-                    ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.checkroom_outlined,
-                          size: 75,
-                          color: AppColors.sage,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          items.isEmpty
-                              ? 'Tủ đồ của bạn đang trống'
-                              : 'Không tìm thấy quần áo',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                    ? ListView(
+                        padding: const EdgeInsets.fromLTRB(18, 24, 18, 128),
+                        children: [
+                          GlassEmptyStateCard(
+                            icon: Icons.checkroom_outlined,
+                            title: items.isEmpty
+                                ? 'Tủ đồ của bạn đang trống'
+                                : 'Không tìm thấy trang phục phù hợp',
+                            subtitle: items.isEmpty
+                                ? 'Chụp hoặc chọn ảnh trang phục của bạn, hoặc nạp bộ sưu tập mẫu để trải nghiệm phối đồ ngay.'
+                                : 'Thử xoá bộ lọc hoặc nhập từ khoá khác.',
+                            actionLabel: items.isEmpty
+                                ? 'Thêm trang phục đầu tiên'
+                                : 'Đặt lại bộ lọc',
+                            onAction: items.isEmpty
+                                ? _openAddClothing
+                                : () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _selectedCategory = 'Tất cả';
+                                    });
+                                  },
                           ),
+                          if (items.isEmpty) ...[
+                            const SizedBox(height: 12),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () async {
+                                  await service.restoreSampleWardrobe();
+                                },
+                                icon: const Icon(Icons.auto_awesome_rounded),
+                                label: const Text('Nạp 12 trang phục mẫu thử'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : RefreshIndicator(
+                        color: AppColors.primary,
+                        onRefresh: _loadClothes,
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(18, 8, 18, 128),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 0.72,
+                          ),
+                          itemCount: filteredItems.length,
+                          itemBuilder: (context, index) {
+                            final item = filteredItems[index];
+                            return ClothingCard(
+                              item: item,
+                              onDelete: () => _deleteClothing(item),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          items.isEmpty
-                              ? 'Hãy thêm món đồ đầu tiên!'
-                              : 'Thử thay đổi bộ lọc hoặc từ khóa.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                    : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    childAspectRatio: 0.72,
-                  ),
-                  itemCount: filteredItems.length,
-                  itemBuilder: (context, index) {
-                    final item = filteredItems[index];
-
-                    return ClothingCard(
-                      item: item,
-                      onDelete: () => _deleteClothing(item),
-                    );
-                  },
-                ),
+                      ),
               ),
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        onPressed: _openAddClothing,
-        icon: const Icon(Icons.add),
-        label: const Text('Thêm quần áo'),
       ),
     );
   }

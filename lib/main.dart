@@ -1,67 +1,54 @@
-
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'screens/home_screen.dart';
-import 'theme/app_theme.dart';
-import 'services/api_client.dart';
 import 'config/config_url.dart';
+import 'screens/main_shell_screen.dart';
+import 'services/api_client.dart';
+import 'services/dailyfit_store.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Đọc file .env
-  await dotenv.load(fileName: '.env');
+  // Cấu hình thanh trạng thái Android trong suốt hiện đại
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
 
-  // Chạy giao diện DailyFit bình thường
+  // Đọc file .env an toàn (không làm văng ứng dụng nếu thiếu .env)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('Lưu ý: Chưa tìm thấy file .env ($e) — dùng cấu hình mặc định.');
+  }
+
+  // Khởi chạy ứng dụng ngay, đồng thời đồng bộ dữ liệu nền mượt mà
+  unawaited(DailyFitStore.instance.initialize());
+
   runApp(const DailyFitApp());
 
-  // Kiểm tra kết nối API khi chạy Debug
-  if (kDebugMode) {
+  if (kDebugMode && ConfigUrl.hasBackendUrl) {
     unawaited(testClothingApi());
   }
 }
 
-// Hàm kiểm tra kết nối Backend
+// Hàm kiểm tra nhanh kết nối Backend khi chạy Debug
 Future<void> testClothingApi() async {
   try {
     debugPrint('===== KIỂM TRA API DAILYFIT =====');
+    debugPrint('URL API: ${ConfigUrl.baseUrl}Clothing');
 
-    final url = '${Config_URL.baseUrl}Clothing';
-    debugPrint('URL API: $url');
-
-    final apiClient = ApiClient();
-
-    final response = await apiClient
-        .get('Clothing')
-        .timeout(const Duration(seconds: 20));
-
+    final response = await ApiClient().get('Clothing');
     debugPrint('Status Code: ${response.statusCode}');
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      );
-
-      if (data is List) {
-        debugPrint('KẾT NỐI API THÀNH CÔNG!');
-        debugPrint('Số lượng quần áo: ${data.length}');
-        debugPrint('Dữ liệu: $data');
-      } else {
-        debugPrint(
-          'API trả về JSON nhưng không phải danh sách.',
-        );
-      }
-    } else {
-      debugPrint('API trả về lỗi.');
-      debugPrint('Response: ${response.body}');
-    }
   } catch (e) {
-    debugPrint('LỖI KẾT NỐI: $e');
+    debugPrint('Backend hiện ngoại tuyến (Chuyển sang Offline Fallback): $e');
   }
 }
 
@@ -74,7 +61,7 @@ class DailyFitApp extends StatelessWidget {
       title: 'DailyFit',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const MainShellScreen(),
     );
   }
 }

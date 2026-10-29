@@ -1,19 +1,18 @@
-
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/clothing_api_service.dart';
-import '../models/clothing_item.dart';
+import 'package:flutter/material.dart';
+
 import '../services/clothing_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/glass_scaffold.dart';
 
 class AddClothingScreen extends StatefulWidget {
   const AddClothingScreen({super.key});
 
   @override
-  State<AddClothingScreen> createState() =>
-      _AddClothingScreenState();
+  State<AddClothingScreen> createState() => _AddClothingScreenState();
 }
 
 class _AddClothingScreenState extends State<AddClothingScreen> {
@@ -27,8 +26,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   PlatformFile? _selectedImage;
   bool _isSaving = false;
 
-
-  final List<String> _types = [
+  static const List<String> _types = [
     'Áo',
     'Áo khoác',
     'Quần',
@@ -42,9 +40,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     'Phụ kiện',
   ];
 
-
-
-  final List<String> _colors = [
+  static const List<String> _colors = [
     'Trắng',
     'Đen',
     'Xám',
@@ -61,9 +57,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     'Khác',
   ];
 
-
-
-  final List<String> _styles = [
+  static const List<String> _styles = [
     'Thường ngày',
     'Thanh lịch',
     'Công sở',
@@ -78,23 +72,18 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     'Dự tiệc',
   ];
 
-
-  // CHỌN ẢNH - GIỮ CÁCH GỌI TRONG CODE CŨ
+  // Chọn ảnh tương thích với phiên bản file_picker hiện tại
   Future<void> _pickImage() async {
     try {
       final file = await FilePicker.pickFile(
         type: FileType.image,
       );
 
-      if (!mounted) return;
-
-      if (file == null) return;
+      if (!mounted || file == null) return;
 
       if (file.path == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể đọc đường dẫn ảnh'),
-          ),
+          const SnackBar(content: Text('Không thể đọc đường dẫn ảnh')),
         );
         return;
       }
@@ -104,33 +93,22 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi chọn ảnh: $e'),
-        ),
+        SnackBar(content: Text('Lỗi chọn ảnh: $e')),
       );
     }
   }
 
-  // LƯU QUẦN ÁO
-
-
   Future<void> _saveClothing() async {
     if (_isSaving) return;
 
-    // Kiểm tra thông tin đã nhập
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Kiểm tra ảnh đã chọn
-    if (_selectedImage == null ||
-        _selectedImage!.path == null) {
+    if (_selectedImage == null || _selectedImage!.path == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng chọn ảnh quần áo'),
-        ),
+        const SnackBar(content: Text('Vui lòng chọn ảnh trang phục')),
       );
       return;
     }
@@ -140,38 +118,32 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     });
 
     try {
-      // BƯỚC 1: Upload ảnh lên Backend
-      final imagePath = await ClothingApiService()
-          .uploadImage(
-        _selectedImage!.path!,
-        _selectedImage!.name,
-      );
-
-      // BƯỚC 2: Tạo đối tượng quần áo
-      final clothing = ClothingItem(
-        id: '',
+      final result = await ClothingService.instance.addClothingWithImage(
         name: _nameController.text.trim(),
         type: _type,
         color: _color,
         style: _style,
-        imagePath: imagePath,
+        localImagePath: _selectedImage!.path!,
+        fileName: _selectedImage!.name,
       );
 
-      // BƯỚC 3: Lưu thông tin vào SQL Server
-      await ClothingService.instance
-          .addClothing(clothing);
-
-      if (!mounted) return;
-
-      // BƯỚC 4: Quay về màn hình tủ đồ
-      Navigator.pop(context);
-    } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Không thể lưu quần áo: $e'),
+          content: Text(
+            result.syncedToServer
+                ? 'Đã lưu "${result.item.name}" lên máy chủ SQL Server'
+                : 'Đã lưu "${result.item.name}" vào bộ nhớ trên thiết bị (Offline)',
+          ),
         ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể lưu quần áo: $e')),
       );
     } finally {
       if (mounted) {
@@ -182,62 +154,23 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     }
   }
 
-
-
-  // Ô NHẬP LIỆU
   InputDecoration _inputDecoration({
     required String hint,
     IconData? icon,
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: icon == null ? null : Icon(icon),
+      prefixIcon: icon == null ? null : Icon(icon, color: AppColors.primary),
       filled: true,
-      fillColor: AppColors.background,
+      fillColor: AppColors.iceSurface.withValues(alpha: 0.75),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
-        vertical: 16,
+        vertical: 15,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
       ),
-    );
-  }
-
-  // DROPDOWN LOẠI VÀ MÀU SẮC
-  Widget _buildDropdown(
-      String label,
-      String value,
-      List<String> options,
-      ValueChanged<String?> onChanged,
-      ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.text,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          decoration: _inputDecoration(
-            hint: 'Chọn $label',
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ],
     );
   }
 
@@ -249,142 +182,129 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
       appBar: AppBar(
-        title: const Text(
-          'Thêm quần áo',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
+        title: const Text('Thêm trang phục'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 32),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Thêm trang phục mới',
+                'Bổ sung vào tủ đồ',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.text,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               const Text(
-                'Làm mới bộ sưu tập thời trang của bạn.',
+                'Tải ảnh và phân loại để DailyFit gợi ý trang phục chuẩn xác hơn.',
                 style: TextStyle(
-                  color: Colors.grey,
+                  fontSize: 13.5,
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 22),
-
-              Container(
+              const SizedBox(height: 18),
+              GlassCard(
                 padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
+                enableBlur: false,
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // KHU VỰC CHỌN ẢNH
+                    // Khu vực chọn ảnh
                     InkWell(
                       onTap: _pickImage,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        height: 220,
+                        height: 230,
                         decoration: BoxDecoration(
-                          color: AppColors.sage
-                              .withValues(alpha: 0.35),
-                          borderRadius:
-                          BorderRadius.circular(18),
+                          color: AppColors.iceSurface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.22),
+                            width: 1.4,
+                          ),
                         ),
                         child: _selectedImage == null
                             ? const Column(
-                          mainAxisAlignment:
-                          MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 60,
-                              color: AppColors.primary,
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              'Chọn ảnh trang phục',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                                fontSize: 16,
-                              ),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'Nhấn để chọn ảnh từ điện thoại',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        )
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_rounded,
+                                    size: 54,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Chọn ảnh trang phục',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Hỗ trợ JPG, PNG, WEBP từ thư viện điện thoại',
+                                    style: TextStyle(
+                                      color: AppColors.textMuted,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ],
+                              )
                             : ClipRRect(
-                          borderRadius:
-                          BorderRadius.circular(18),
-                          child: Image.file(
-                            File(_selectedImage!.path!),
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) {
-                              return const Center(
-                                child: Text(
-                                  'Không thể hiển thị ảnh',
+                                borderRadius: BorderRadius.circular(19),
+                                child: Image.file(
+                                  File(_selectedImage!.path!),
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) {
+                                    return const Center(
+                                      child: Text('Không thể hiển thị ảnh'),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                        ),
+                              ),
                       ),
                     ),
-
                     if (_selectedImage != null) ...[
-                      const SizedBox(height: 10),
-                      TextButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Thay đổi ảnh'),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Chọn ảnh khác'),
+                        ),
                       ),
                     ],
+                    const SizedBox(height: 20),
 
-                    const SizedBox(height: 24),
-
-                    // TÊN QUẦN ÁO
+                    // Tên trang phục
                     const Text(
-                      'Tên quần áo',
+                      'Tên trang phục',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.text,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _nameController,
-                      textCapitalization:
-                      TextCapitalization.sentences,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: _inputDecoration(
-                        hint: 'Ví dụ: Áo sơ mi trắng',
-                        icon: Icons.checkroom,
+                        hint: 'Ví dụ: Áo sơ mi Oxford xanh nhạt',
+                        icon: Icons.checkroom_rounded,
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
-                          return 'Vui lòng nhập tên quần áo';
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Vui lòng nhập tên trang phục';
                         }
                         return null;
                       },
@@ -392,80 +312,148 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
                     const SizedBox(height: 20),
 
-                    // LOẠI QUẦN ÁO
-                    _buildDropdown(
-                      'Loại quần áo',
-                      _type,
-                      _types,
-                          (value) {
-                        if (value != null) {
-                          setState(() {
-                            _type = value;
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // MÀU SẮC
-                    _buildDropdown(
-                      'Màu sắc',
-                      _color,
-                      _colors,
-                          (value) {
-                        if (value != null) {
-                          setState(() {
-                            _color = value;
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // PHONG CÁCH
+                    // Loại trang phục
                     const Text(
-                      'Phong cách',
+                      'Danh mục',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.text,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: _type,
+                      isExpanded: true,
+                      decoration: _inputDecoration(hint: 'Chọn danh mục'),
+                      items: _types.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _type = value);
+                        }
+                      },
+                    ),
 
+                    const SizedBox(height: 20),
+
+                    // Chọn màu sắc trực quan
+                    const Text(
+                      'Màu sắc chủ đạo',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _colors.map((colorName) {
+                        final selected = colorName == _color;
+                        final swatch = AppColors.swatchForName(colorName);
+                        return InkWell(
+                          onTap: () => setState(() => _color = colorName),
+                          borderRadius: BorderRadius.circular(999),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.primary.withValues(alpha: 0.12)
+                                  : AppColors.background,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: selected
+                                    ? AppColors.primary
+                                    : Colors.black.withValues(alpha: 0.08),
+                                width: selected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 13,
+                                  height: 13,
+                                  decoration: BoxDecoration(
+                                    color: swatch,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.18),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  colorName,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: selected
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Phong cách
+                    const Text(
+                      'Phong cách',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _styles.map((style) {
-                        final selected = _style == style;
-
                         return ChoiceChip(
                           label: Text(style),
-                          selected: selected,
-                          selectedColor: AppColors.sage,
+                          selected: _style == style,
                           onSelected: (_) {
-                            setState(() {
-                              _style = style;
-                            });
+                            setState(() => _style = style);
                           },
                         );
                       }).toList(),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 28),
 
-                    // NÚT LƯU
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed:
-                        _isSaving ? null : _saveClothing,
-                        icon: const Icon(Icons.save_outlined),
+                        onPressed: _isSaving ? null : _saveClothing,
+                        icon: _isSaving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : const Icon(Icons.save_outlined),
                         label: Text(
-                          _isSaving
-                              ? 'Đang lưu...'
-                              : 'Lưu vào tủ đồ',
+                          _isSaving ? 'Đang lưu trang phục...' : 'Lưu vào tủ đồ',
                         ),
                       ),
                     ),

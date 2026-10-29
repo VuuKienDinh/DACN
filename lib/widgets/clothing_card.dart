@@ -1,5 +1,5 @@
-
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../config/config_url.dart';
@@ -18,15 +18,21 @@ class ClothingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final swatch = AppColors.swatchForName(item.color);
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.white.withValues(alpha: 0.95),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF1E3A8A).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -39,19 +45,47 @@ class ClothingCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 buildClothingImage(item.imagePath),
+                // Nhãn loại trang phục góc trên trái
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      item.type,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                // Nút xóa góc trên phải
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Material(
-                    color: Colors.white,
+                    color: AppColors.white.withValues(alpha: 0.9),
                     shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: 'Xóa quần áo',
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.redAccent,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onDelete,
+                      child: const Padding(
+                        padding: EdgeInsets.all(7),
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          size: 19,
+                          color: AppColors.error,
+                        ),
                       ),
-                      onPressed: onDelete,
                     ),
                   ),
                 ),
@@ -59,7 +93,7 @@ class ClothingCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -68,20 +102,39 @@ class ClothingCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                     color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  '${item.color} · ${item.style}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      width: 11,
+                      height: 11,
+                      decoration: BoxDecoration(
+                        color: swatch,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${item.color} · ${item.style}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -95,51 +148,74 @@ class ClothingCard extends StatelessWidget {
 Widget buildClothingImage(String imagePath) {
   final path = imagePath.trim();
 
-  // Widget mặc định khi chưa có ảnh hoặc ảnh bị lỗi
   Widget placeholder() {
     return Container(
-      color: AppColors.sage,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.iceSurface,
+            AppColors.softBlueTint,
+          ],
+        ),
+      ),
       child: const Center(
         child: Icon(
-          Icons.checkroom,
-          size: 55,
+          Icons.checkroom_rounded,
+          size: 46,
           color: AppColors.primary,
         ),
       ),
     );
   }
 
-  // Trường hợp chưa có ảnh
   if (path.isEmpty) {
     return placeholder();
   }
 
-  // Trường hợp ảnh đã lưu trên Backend
-  if (path.startsWith('/uploads/') ||
-      path.startsWith('https://') ||
-      path.startsWith('http://')) {
-    final imageUrl = path.startsWith('http')
-        ? path
-        : Uri.parse(Config_URL.baseUrl)
-        .resolve(path)
+  if (path.startsWith('https://') || path.startsWith('http://')) {
+    return Image.network(
+      path,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: AppColors.iceSurface,
+          child: const Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        );
+      },
+      errorBuilder: (_, _, _) => placeholder(),
+    );
+  }
+
+  if (path.startsWith('/uploads/') || path.startsWith('uploads/')) {
+    if (!ConfigUrl.hasBackendUrl) {
+      return placeholder();
+    }
+    final imageUrl = Uri.parse(ConfigUrl.baseUrl)
+        .resolve(path.startsWith('/') ? path : '/$path')
         .toString();
 
     return Image.network(
       imageUrl,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return placeholder();
-      },
+      errorBuilder: (_, _, _) => placeholder(),
     );
   }
 
-  // Hỗ trợ đường dẫn ảnh cục bộ từ code Flutter cũ
   return Image.file(
     File(path),
     fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) {
-      return placeholder();
-    },
+    errorBuilder: (_, _, _) => placeholder(),
   );
 }
-
