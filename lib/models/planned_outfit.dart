@@ -59,5 +59,16 @@ class PlannedOutfit {
     final d = date.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
+
+  static DateTime? tryParseKey(String rawKey) {
+    final parts = rawKey.trim().split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return DateTime(y, m, d);
+  }
 }
 

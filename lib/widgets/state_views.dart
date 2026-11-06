@@ -18,7 +18,7 @@ class GlassLoadingCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
+          SizedBox(
             width: 30,
             height: 30,
             child: CircularProgressIndicator(
@@ -30,7 +30,7 @@ class GlassLoadingCard extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
               fontSize: 14,
@@ -82,7 +82,7 @@ class GlassEmptyStateCard extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
@@ -92,7 +92,7 @@ class GlassEmptyStateCard extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               color: AppColors.textSecondary,
               height: 1.45,
@@ -133,10 +133,10 @@ class GlassStatusBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.10),
+        color: accentColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: accentColor.withValues(alpha: 0.25),
+          color: accentColor.withValues(alpha: 0.28),
         ),
       ),
       child: Row(
@@ -146,7 +146,7 @@ class GlassStatusBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.text,
@@ -175,4 +175,3 @@ class GlassStatusBanner extends StatelessWidget {
     );
   }
 }
-

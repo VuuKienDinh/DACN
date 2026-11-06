@@ -28,7 +28,13 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(borderRadius);
+    final baseColor = tintColor ??
+        (isDark ? const Color(0xFF0B1120) : AppColors.white);
+    final endColor = tintColor ??
+        (isDark ? const Color(0xFF0F172A) : AppColors.white);
+
     final surface = Container(
       decoration: BoxDecoration(
         borderRadius: radius,
@@ -36,17 +42,19 @@ class GlassCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            (tintColor ?? AppColors.white).withValues(alpha: 0.88),
-            (tintColor ?? AppColors.white).withValues(alpha: 0.72),
+            baseColor.withValues(alpha: isDark ? 0.96 : 0.88),
+            endColor.withValues(alpha: isDark ? 0.92 : 0.72),
           ],
         ),
         border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.92),
+          color: AppColors.cardBorder,
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E3A8A).withValues(alpha: 0.06),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFF1E3A8A).withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -57,8 +65,8 @@ class GlassCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
-          splashColor: AppColors.primary.withValues(alpha: 0.08),
-          highlightColor: AppColors.primary.withValues(alpha: 0.04),
+          splashColor: AppColors.primary.withValues(alpha: 0.10),
+          highlightColor: AppColors.primary.withValues(alpha: 0.05),
           child: Padding(
             padding: padding,
             child: child,
@@ -86,4 +94,3 @@ class GlassCard extends StatelessWidget {
     return content;
   }
 }
-

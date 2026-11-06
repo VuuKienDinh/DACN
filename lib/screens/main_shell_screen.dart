@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/dailyfit_store.dart';
 import '../widgets/dailyfit_bottom_nav.dart';
 import '../widgets/glass_scaffold.dart';
 import 'calendar_screen.dart';
@@ -30,26 +31,30 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = <Widget>[
-      HomeScreen(onSwitchTab: _switchTab),
-      OutfitScreen(initialOccasion: _requestedOccasion),
-      const WardrobeScreen(),
-      CalendarScreen(
-        onOpenRecommendations: () => _switchTab(1),
-      ),
-      const ProfileScreen(),
-    ];
+    return ValueListenableBuilder(
+      valueListenable: DailyFitStore.instance.preferences,
+      builder: (context, _, _) {
+        final screens = <Widget>[
+          HomeScreen(onSwitchTab: _switchTab),
+          OutfitScreen(initialOccasion: _requestedOccasion),
+          const WardrobeScreen(),
+          CalendarScreen(
+            onOpenRecommendations: () => _switchTab(1),
+          ),
+          const ProfileScreen(),
+        ];
 
-    return GlassScaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: DailyFitBottomNav(
-        currentIndex: _selectedIndex,
-        onTap: (idx) => _switchTab(idx),
-      ),
+        return GlassScaffold(
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: screens,
+          ),
+          bottomNavigationBar: DailyFitBottomNav(
+            currentIndex: _selectedIndex,
+            onTap: (idx) => _switchTab(idx),
+          ),
+        );
+      },
     );
   }
 }
-

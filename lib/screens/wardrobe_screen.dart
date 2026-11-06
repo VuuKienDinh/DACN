@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
 import '../services/clothing_service.dart';
+import '../services/dailyfit_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/clothing_card.dart';
 import '../widgets/state_views.dart';
 import 'add_clothing_screen.dart';
+import 'clothing_detail_screen.dart';
 
 class WardrobeScreen extends StatefulWidget {
   const WardrobeScreen({super.key});
@@ -116,12 +118,26 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     }
   }
 
-  Future<void> _openAddClothing() async {
-    final added = await Navigator.push<bool>(
+  Future<void> _openAddClothing([ClothingItem? editingItem]) async {
+    final added = await Navigator.push<Object?>(
       context,
-      MaterialPageRoute(builder: (_) => const AddClothingScreen()),
+      MaterialPageRoute(
+        builder: (_) => AddClothingScreen(editingItem: editingItem),
+      ),
     );
-    if (added == true && mounted) {
+    if (added != null && mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _openClothingDetail(ClothingItem item) async {
+    await Navigator.push<Object?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ClothingDetailScreen(initialItem: item),
+      ),
+    );
+    if (mounted) {
       setState(() {});
     }
   }
@@ -134,6 +150,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
       bottom: false,
       child: AnimatedBuilder(
         animation: Listenable.merge([
+          DailyFitStore.instance.preferences,
           service.items,
           service.syncStatus,
           service.statusMessage,
@@ -160,7 +177,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           return Column(
             children: [
               if (_isLoading)
-                const LinearProgressIndicator(
+                LinearProgressIndicator(
                   minHeight: 2.5,
                   color: AppColors.primary,
                 ),
@@ -176,7 +193,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Tủ đồ của tôi',
                                 style: TextStyle(
                                   fontSize: 24,
@@ -188,7 +205,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                               const SizedBox(height: 3),
                               Text(
                                 '${items.length} món đồ · ${isConnected ? "Đã kết nối SQL Server" : "Lưu cục bộ & Mẫu thử"}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -199,13 +216,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         IconButton(
                           tooltip: 'Đồng bộ lại',
                           onPressed: _isLoading ? null : _loadClothes,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.sync_rounded,
                             color: AppColors.primary,
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: _openAddClothing,
+                          onPressed: () => _openAddClothing(),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -223,28 +240,33 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     // Ô tìm kiếm kính mờ
                     TextField(
                       controller: _searchController,
+                      style: TextStyle(color: AppColors.text),
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         hintText: 'Tìm theo tên, màu sắc hoặc phong cách...',
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           fontSize: 13.5,
                           color: AppColors.textMuted,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.search_rounded,
                           color: AppColors.primary,
                         ),
                         suffixIcon: _searchController.text.isEmpty
                             ? null
                             : IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18),
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {});
                                 },
                               ),
                         filled: true,
-                        fillColor: AppColors.white.withValues(alpha: 0.9),
+                        fillColor: AppColors.surface.withValues(alpha: 0.92),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 13,
@@ -252,13 +274,15 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                           borderSide: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.14),
+                            color: AppColors.cardBorder,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                           borderSide: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.12),
+                            color: AppColors.isDark
+                                ? const Color(0xFF38BDF8).withValues(alpha: 0.20)
+                                : AppColors.primary.withValues(alpha: 0.14),
                           ),
                         ),
                       ),
@@ -310,7 +334,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 ? 'Thêm trang phục đầu tiên'
                                 : 'Đặt lại bộ lọc',
                             onAction: items.isEmpty
-                                ? _openAddClothing
+                                ? () => _openAddClothing()
                                 : () {
                                     _searchController.clear();
                                     setState(() {
@@ -334,6 +358,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       )
                     : RefreshIndicator(
                         color: AppColors.primary,
+                        backgroundColor: AppColors.surface,
                         onRefresh: _loadClothes,
                         child: GridView.builder(
                           padding: const EdgeInsets.fromLTRB(18, 8, 18, 128),
@@ -349,6 +374,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             final item = filteredItems[index];
                             return ClothingCard(
                               item: item,
+                              onTap: () => _openClothingDetail(item),
                               onDelete: () => _deleteClothing(item),
                             );
                           },

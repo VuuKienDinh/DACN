@@ -17,6 +17,18 @@ class ClothingItem {
     this.isLocalOnly = false,
   });
 
+  // Tách danh sách các phong cách của món đồ (hỗ trợ chọn 1 hoặc nhiều phong cách)
+  List<String> get styles {
+    final parsed = style
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return parsed.isEmpty ? const ['Thường ngày'] : parsed;
+  }
+
+  String get primaryStyle => styles.first;
+
   ClothingItem copyWith({
     String? id,
     String? name,

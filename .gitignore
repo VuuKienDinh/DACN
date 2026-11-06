@@ -46,3 +46,13 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# .NET Backend / Visual Studio build & IDE cache
+.vs/
+**/[Bb]in/
+**/[Oo]bj/
+*.csproj.user
+*.suo
+*.userosscache
+*.sln.docstates
+

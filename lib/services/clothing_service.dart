@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,7 @@ import '../config/config_url.dart';
 import '../data/mock_catalog.dart';
 import '../models/clothing_item.dart';
 import 'clothing_api_service.dart';
+import 'dailyfit_store.dart';
 
 enum BackendSyncStatus {
   idle,
@@ -99,16 +101,27 @@ class ClothingService {
 
   Future<void> _performLoadClothes() async {
     syncStatus.value = BackendSyncStatus.syncing;
-    final localItems = await _readLocalItems();
+    var localItems = await _readLocalItems();
 
     if (ConfigUrl.hasBackendUrl) {
       try {
-        final serverClothes = await _api.getClothes();
+        var serverClothes = await _api.getClothes();
+
+        // Tự động đồng bộ các món đồ đã thêm lúc Offline lên SQL Server
+        if (localItems.isNotEmpty) {
+          localItems = await _syncPendingLocalItems(localItems, serverClothes);
+          serverClothes = await _api.getClothes();
+        }
+
         syncStatus.value = BackendSyncStatus.connected;
         statusMessage.value =
             'Đã kết nối máy chủ (${serverClothes.length} món trên SQL Server)';
 
         items.value = [...serverClothes, ...localItems];
+        await DailyFitStore.instance.reconcileWithWardrobe(
+          items.value,
+          isAuthoritativeWardrobe: true,
+        );
         return;
       } catch (_) {
         // Máy chủ chưa bật hoặc không thể kết nối -> dùng dữ liệu cục bộ & mẫu thử
@@ -126,6 +139,62 @@ class ClothingService {
         : 'Chưa cấu hình BASE_URL · Đang dùng dữ liệu trên máy & mẫu thử';
 
     items.value = [...localItems, ...activeMocks];
+  }
+
+  // Đẩy các trang phục lưu tạm trên điện thoại lên SQL Server ngay khi có kết nối
+  Future<List<ClothingItem>> _syncPendingLocalItems(
+    List<ClothingItem> pendingLocal,
+    List<ClothingItem> existingServer,
+  ) async {
+    final remaining = <ClothingItem>[];
+
+    for (final local in pendingLocal.reversed) {
+      final alreadyOnServer = existingServer.any(
+        (s) =>
+            s.name.trim().toLowerCase() == local.name.trim().toLowerCase() &&
+            s.type == local.type &&
+            s.color == local.color &&
+            s.style == local.style,
+      );
+
+      if (alreadyOnServer) {
+        continue;
+      }
+
+      try {
+        String? serverImagePath;
+        final imgPath = local.imagePath.trim();
+        if (imgPath.isNotEmpty) {
+          if (imgPath.startsWith('http://') ||
+              imgPath.startsWith('https://') ||
+              imgPath.startsWith('/uploads/')) {
+            serverImagePath = imgPath;
+          } else {
+            final imgFile = File(imgPath);
+            if (imgFile.existsSync()) {
+              final fileName = imgPath.split(RegExp(r'[/\\]')).last;
+              serverImagePath = await _api.uploadImage(imgPath, fileName);
+            }
+          }
+        }
+
+        await _api.addClothing(
+          ClothingItem(
+            id: '',
+            name: local.name,
+            type: local.type,
+            color: local.color,
+            style: local.style,
+            imagePath: serverImagePath ?? '',
+          ),
+        );
+      } catch (_) {
+        remaining.insert(0, local);
+      }
+    }
+
+    await _writeLocalItems(remaining);
+    return remaining;
   }
 
   // Nạp lại bộ trang phục mẫu chất lượng cao theo yêu cầu người dùng
@@ -219,11 +288,120 @@ class ClothingService {
     );
   }
 
-  // Xóa quần áo trên SQL Server hoặc bộ nhớ cục bộ
+  // Cập nhật đầy đủ thông tin & ảnh trang phục (giữ nguyên ID trên SQL Server)
+  Future<AddClothingResult> updateClothing({
+    required ClothingItem existing,
+    required String name,
+    required String type,
+    required String color,
+    required String style,
+    String? newLocalImagePath,
+    String? newFileName,
+  }) async {
+    final isServerItem =
+        !existing.id.startsWith('local-') && !existing.id.startsWith('mock-');
+
+    if (isServerItem && ConfigUrl.hasBackendUrl) {
+      try {
+        var resolvedImagePath = existing.imagePath;
+        if (newLocalImagePath != null && newLocalImagePath.trim().isNotEmpty) {
+          resolvedImagePath = await _api.uploadImage(
+            newLocalImagePath,
+            newFileName ?? newLocalImagePath.split(RegExp(r'[/\\]')).last,
+          );
+        }
+
+        final updated = existing.copyWith(
+          name: name,
+          type: type,
+          color: color,
+          style: style,
+          imagePath: resolvedImagePath,
+          isLocalOnly: false,
+        );
+
+        await _api.updateClothing(updated);
+        syncStatus.value = BackendSyncStatus.connected;
+
+        items.value = items.value
+            .map((item) => item.id == existing.id ? updated : item)
+            .toList();
+        await DailyFitStore.instance.syncUpdatedClothingItem(updated);
+
+        return AddClothingResult(
+          item: updated,
+          syncedToServer: true,
+        );
+      } catch (_) {
+        // Nếu mất kết nối tạm thời vẫn cập nhật mượt trên thiết bị
+      }
+    }
+
+    final fallbackUpdated = existing.copyWith(
+      name: name,
+      type: type,
+      color: color,
+      style: style,
+      imagePath: (newLocalImagePath != null && newLocalImagePath.isNotEmpty)
+          ? newLocalImagePath
+          : existing.imagePath,
+      isLocalOnly: true,
+    );
+
+    if (existing.id.startsWith('local-')) {
+      final localItems = await _readLocalItems();
+      final nextLocal = localItems
+          .map((item) => item.id == existing.id ? fallbackUpdated : item)
+          .toList();
+      await _writeLocalItems(nextLocal);
+    } else if (existing.id.startsWith('mock-')) {
+      await _markMockDeleted(existing.id);
+      final localIdItem = fallbackUpdated.copyWith(
+        id: 'local-${existing.id}',
+      );
+      final localItems = await _readLocalItems();
+      final filtered =
+          localItems.where((i) => i.id != localIdItem.id).toList();
+      await _writeLocalItems([localIdItem, ...filtered]);
+      items.value = items.value
+          .map((item) => item.id == existing.id ? localIdItem : item)
+          .toList();
+      await DailyFitStore.instance.syncUpdatedClothingItem(localIdItem);
+      return AddClothingResult(
+        item: localIdItem,
+        syncedToServer: false,
+      );
+    }
+
+    items.value = items.value
+        .map((item) => item.id == existing.id ? fallbackUpdated : item)
+        .toList();
+    await DailyFitStore.instance.syncUpdatedClothingItem(fallbackUpdated);
+
+    return AddClothingResult(
+      item: fallbackUpdated,
+      syncedToServer: false,
+    );
+  }
+
+  // Cập nhật tên, danh mục, màu sắc hoặc đa phong cách của trang phục
+  Future<bool> updateClothingItem(ClothingItem updated) async {
+    final res = await updateClothing(
+      existing: updated,
+      name: updated.name,
+      type: updated.type,
+      color: updated.color,
+      style: updated.style,
+    );
+    return res.syncedToServer;
+  }
+
+  // Xóa quần áo trên SQL Server hoặc bộ nhớ cục bộ (đồng thời dọn lịch mặc / yêu thích liên quan)
   Future<void> deleteClothing(String id) async {
     if (id.startsWith('mock-')) {
       await _markMockDeleted(id);
       items.value = items.value.where((item) => item.id != id).toList();
+      await DailyFitStore.instance.removeClothingItemFromSavedOutfits(id);
       return;
     }
 
@@ -233,10 +411,12 @@ class ClothingService {
         localItems.where((item) => item.id != id).toList(),
       );
       items.value = items.value.where((item) => item.id != id).toList();
+      await DailyFitStore.instance.removeClothingItemFromSavedOutfits(id);
       return;
     }
 
     await _api.deleteClothing(id);
     items.value = items.value.where((item) => item.id != id).toList();
+    await DailyFitStore.instance.removeClothingItemFromSavedOutfits(id);
   }
 }

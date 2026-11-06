@@ -126,7 +126,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                 // Header
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -139,7 +139,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                               letterSpacing: -0.4,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Gợi ý cho Đi học, Đi làm, Đi chơi và sự kiện',
                             style: TextStyle(
@@ -167,7 +167,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Chọn hoàn cảnh xuất hiện',
                         style: TextStyle(
                           fontSize: 14,
@@ -211,7 +211,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.thermostat_rounded,
                                 size: 17,
                                 color: AppColors.primary,
@@ -220,7 +220,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                               Expanded(
                                 child: Text(
                                   'Đang tối ưu theo ${weather.city} (${weather.formatTemperature(useCelsius: prefs.useCelsius)} · ${weather.condition}) & phong cách ${prefs.preferredStyles.take(2).join(", ")}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                     fontWeight: FontWeight.w500,
@@ -255,9 +255,12 @@ class _OutfitScreenState extends State<OutfitScreen> {
                 else if (suggestions.isEmpty)
                   GlassEmptyStateCard(
                     icon: Icons.style_outlined,
-                    title: 'Chưa đủ món đồ để kết hợp',
-                    subtitle:
-                        'Hãy bổ sung ít nhất 1 chiếc áo và 1 chiếc quần/váy (hoặc đầm) vào Tủ đồ để hệ thống tạo gợi ý hoàn chỉnh.',
+                    title: clothes.length >= 2
+                        ? 'Chưa có bộ đồ phù hợp dịp "$_occasion"'
+                        : 'Chưa đủ món đồ để kết hợp',
+                    subtitle: clothes.length >= 2
+                        ? 'Hệ thống đã tự động lọc bỏ các cách phối lệch tông (như ghép đồ thể thao với đồ công sở). Hãy thêm trang phục hợp dịp "$_occasion" hoặc chọn hoàn cảnh khác.'
+                        : 'Hãy bổ sung ít nhất 1 chiếc áo và 1 chiếc quần/váy (hoặc đầm) vào Tủ đồ để hệ thống tạo gợi ý hoàn chỉnh.',
                     actionLabel: 'Thêm trang phục mới',
                     onAction: () async {
                       await Navigator.push(
@@ -274,7 +277,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                       Expanded(
                         child: Text(
                           'Đề xuất cho "$_occasion" (${suggestions.length})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.text,
@@ -284,7 +287,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Từ ${clothes.length} món trong tủ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
                           color: AppColors.textMuted,
                         ),

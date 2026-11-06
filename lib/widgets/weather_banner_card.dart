@@ -38,8 +38,8 @@ class WeatherBannerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (weather == null && isLoading) {
-      return const GlassCard(
-        padding: EdgeInsets.all(22),
+      return GlassCard(
+        padding: const EdgeInsets.all(22),
         child: Row(
           children: [
             SizedBox(
@@ -50,7 +50,7 @@ class WeatherBannerCard extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 'Đang cập nhật thời tiết khu vực của bạn...',
@@ -93,13 +93,13 @@ class WeatherBannerCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.10),
+                          color: AppColors.primary.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.location_on_rounded,
                               size: 15,
                               color: AppColors.primary,
@@ -110,7 +110,7 @@ class WeatherBannerCard extends StatelessWidget {
                                 info.city,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primary,
@@ -119,7 +119,7 @@ class WeatherBannerCard extends StatelessWidget {
                             ),
                             if (onTapCity != null) ...[
                               const SizedBox(width: 3),
-                              const Icon(
+                              Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 size: 16,
                                 color: AppColors.primary,
@@ -136,8 +136,8 @@ class WeatherBannerCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: info.isLive
-                            ? AppColors.success.withValues(alpha: 0.12)
-                            : AppColors.warning.withValues(alpha: 0.14),
+                            ? AppColors.success.withValues(alpha: 0.14)
+                            : AppColors.warning.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -148,8 +148,8 @@ class WeatherBannerCard extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: info.isLive
-                              ? const Color(0xFF047857)
-                              : const Color(0xFFB45309),
+                              ? AppColors.successText
+                              : AppColors.warningText,
                         ),
                       ),
                     ),
@@ -161,7 +161,7 @@ class WeatherBannerCard extends StatelessWidget {
                 onPressed: isLoading ? null : onRefresh,
                 visualDensity: VisualDensity.compact,
                 icon: isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 17,
                         height: 17,
                         child: CircularProgressIndicator(
@@ -169,7 +169,7 @@ class WeatherBannerCard extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.refresh_rounded,
                         size: 20,
                         color: AppColors.textSecondary,
@@ -215,7 +215,7 @@ class WeatherBannerCard extends StatelessWidget {
                       children: [
                         Text(
                           info.formatTemperature(useCelsius: useCelsius),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
                             color: AppColors.text,
@@ -228,7 +228,7 @@ class WeatherBannerCard extends StatelessWidget {
                             info.condition,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textSecondary,
@@ -240,7 +240,7 @@ class WeatherBannerCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Cảm giác như ${info.formatFeelsLike(useCelsius: useCelsius)} · Độ ẩm ${info.humidity}% · Gió ${info.windSpeedKmh.round()} km/h',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         color: AppColors.textMuted,
                       ),
@@ -257,17 +257,17 @@ class WeatherBannerCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              color: AppColors.iceSurface.withValues(alpha: 0.9),
+              color: AppColors.iceSurface.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.14),
+                color: AppColors.primary.withValues(alpha: 0.18),
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 2),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
                   child: Icon(
                     Icons.auto_awesome_rounded,
                     size: 18,
@@ -278,13 +278,13 @@ class WeatherBannerCard extends StatelessWidget {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.45,
                         color: AppColors.textSecondary,
                       ),
                       children: [
-                        const TextSpan(
+                        TextSpan(
                           text: 'Lời khuyên phối đồ: ',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
@@ -304,4 +304,3 @@ class WeatherBannerCard extends StatelessWidget {
     );
   }
 }
-

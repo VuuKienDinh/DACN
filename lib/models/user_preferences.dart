@@ -22,6 +22,14 @@ class UserPreferences {
   final List<String> preferredStyles;
   final List<String> favoriteColors;
   final bool useCelsius;
+  final bool isDarkMode;
+  final String email;
+  final String phoneNumber;
+  final String address;
+  final String gender;
+  final String birthDate;
+  final String bio;
+  final String avatarPath;
 
   const UserPreferences({
     required this.displayName,
@@ -29,6 +37,14 @@ class UserPreferences {
     required this.preferredStyles,
     required this.favoriteColors,
     this.useCelsius = true,
+    this.isDarkMode = false,
+    this.email = '',
+    this.phoneNumber = '',
+    this.address = '',
+    this.gender = '',
+    this.birthDate = '',
+    this.bio = '',
+    this.avatarPath = '',
   });
 
   static const List<VietnamCity> supportedCities = [
@@ -102,6 +118,7 @@ class UserPreferences {
       preferredStyles: ['Tối giản', 'Thanh lịch', 'Hàn Quốc'],
       favoriteColors: ['Xanh dương', 'Trắng', 'Be', 'Đen'],
       useCelsius: true,
+      isDarkMode: false,
     );
   }
 
@@ -111,6 +128,14 @@ class UserPreferences {
     List<String>? preferredStyles,
     List<String>? favoriteColors,
     bool? useCelsius,
+    bool? isDarkMode,
+    String? email,
+    String? phoneNumber,
+    String? address,
+    String? gender,
+    String? birthDate,
+    String? bio,
+    String? avatarPath,
   }) {
     return UserPreferences(
       displayName: displayName ?? this.displayName,
@@ -118,6 +143,14 @@ class UserPreferences {
       preferredStyles: preferredStyles ?? this.preferredStyles,
       favoriteColors: favoriteColors ?? this.favoriteColors,
       useCelsius: useCelsius ?? this.useCelsius,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      address: address ?? this.address,
+      gender: gender ?? this.gender,
+      birthDate: birthDate ?? this.birthDate,
+      bio: bio ?? this.bio,
+      avatarPath: avatarPath ?? this.avatarPath,
     );
   }
 
@@ -144,6 +177,14 @@ class UserPreferences {
       preferredStyles: styles,
       favoriteColors: colors,
       useCelsius: json['useCelsius'] != false,
+      isDarkMode: json['isDarkMode'] == true,
+      email: (json['email'] ?? '').toString().trim(),
+      phoneNumber: (json['phoneNumber'] ?? '').toString().trim(),
+      address: (json['address'] ?? '').toString().trim(),
+      gender: (json['gender'] ?? '').toString().trim(),
+      birthDate: (json['birthDate'] ?? '').toString().trim(),
+      bio: (json['bio'] ?? '').toString().trim(),
+      avatarPath: (json['avatarPath'] ?? '').toString().trim(),
     );
   }
 
@@ -154,7 +195,14 @@ class UserPreferences {
       'preferredStyles': preferredStyles,
       'favoriteColors': favoriteColors,
       'useCelsius': useCelsius,
+      'isDarkMode': isDarkMode,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'gender': gender,
+      'birthDate': birthDate,
+      'bio': bio,
+      'avatarPath': avatarPath,
     };
   }
 }
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
 import '../models/outfit_suggestion.dart';
+import '../screens/clothing_detail_screen.dart';
 import '../theme/app_theme.dart';
 import 'clothing_card.dart';
 import 'glass_card.dart';
@@ -26,47 +27,57 @@ class OutfitShowcaseCard extends StatelessWidget {
     this.onPrimaryCta,
   });
 
-  Widget _buildItemThumb(ClothingItem item) {
-    return Container(
-      width: 96,
-      margin: const EdgeInsets.only(right: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              height: 96,
-              width: 96,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.10),
+  Widget _buildItemThumb(BuildContext context, ClothingItem item) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ClothingDetailScreen(initialItem: item),
+          ),
+        );
+      },
+      child: Container(
+        width: 96,
+        margin: const EdgeInsets.only(right: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: 96,
+                width: 96,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.14),
+                  ),
                 ),
+                child: buildClothingImage(item.imagePath),
               ),
-              child: buildClothingImage(item.imagePath),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            item.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.text,
+            const SizedBox(height: 6),
+            Text(
+              item.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.text,
+              ),
             ),
-          ),
-          Text(
-            item.type,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textMuted,
+            Text(
+              item.type,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textMuted,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -96,7 +107,7 @@ class OutfitShowcaseCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.black.withValues(alpha: 0.08),
-                            Colors.black.withValues(alpha: 0.62),
+                            Colors.black.withValues(alpha: 0.65),
                           ],
                         ),
                       ),
@@ -110,13 +121,13 @@ class OutfitShowcaseCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.90),
+                          color: AppColors.surface.withValues(alpha: 0.90),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.auto_awesome_rounded,
                               size: 14,
                               color: AppColors.primary,
@@ -124,7 +135,7 @@ class OutfitShowcaseCard extends StatelessWidget {
                             const SizedBox(width: 5),
                             Text(
                               '${outfit.score.round()}% Phù hợp',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
@@ -138,7 +149,7 @@ class OutfitShowcaseCard extends StatelessWidget {
                       top: 10,
                       right: 10,
                       child: Material(
-                        color: AppColors.white.withValues(alpha: 0.90),
+                        color: AppColors.surface.withValues(alpha: 0.90),
                         shape: const CircleBorder(),
                         child: InkWell(
                           customBorder: const CircleBorder(),
@@ -171,7 +182,8 @@ class OutfitShowcaseCard extends StatelessWidget {
                               vertical: 3.5,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.88),
+                              color: const Color(0xFF2563EB)
+                                  .withValues(alpha: 0.90),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -222,12 +234,12 @@ class OutfitShowcaseCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.11),
+                              color: AppColors.primary.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               outfit.occasion,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
@@ -244,13 +256,13 @@ class OutfitShowcaseCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
                                 color:
-                                    AppColors.primary.withValues(alpha: 0.16),
+                                    AppColors.primary.withValues(alpha: 0.20),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.star_rounded,
                                   size: 14,
                                   color: AppColors.primary,
@@ -258,7 +270,7 @@ class OutfitShowcaseCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   '${outfit.score.round()} điểm',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.primary,
@@ -272,7 +284,7 @@ class OutfitShowcaseCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         outfit.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text,
@@ -300,7 +312,7 @@ class OutfitShowcaseCard extends StatelessWidget {
           // Nhãn tương thích thời tiết
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.wb_twilight_rounded,
                 size: 15,
                 color: AppColors.skyAccent,
@@ -309,7 +321,7 @@ class OutfitShowcaseCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   outfit.weatherTag,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.skyAccent,
@@ -326,7 +338,9 @@ class OutfitShowcaseCard extends StatelessWidget {
             height: 138,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: outfit.items.map(_buildItemThumb).toList(),
+              children: outfit.items
+                  .map((item) => _buildItemThumb(context, item))
+                  .toList(),
             ),
           ),
 
@@ -337,12 +351,12 @@ class OutfitShowcaseCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.iceSurface.withValues(alpha: 0.75),
+              color: AppColors.iceSurface.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
               outfit.reason,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.8,
                 color: AppColors.textSecondary,
                 height: 1.45,

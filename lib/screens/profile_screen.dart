@@ -4,8 +4,11 @@ import '../config/config_url.dart';
 import '../models/user_preferences.dart';
 import '../services/clothing_service.dart';
 import '../services/dailyfit_store.dart';
+import '../services/outfit_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/user_avatar.dart';
+import 'user_profile_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,18 +20,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isTestingConnection = false;
 
-  static const List<String> _allStyles = [
-    'Tối giản',
-    'Thanh lịch',
-    'Công sở',
-    'Hàn Quốc',
-    'Năng động',
-    'Thường ngày',
-    'Đường phố',
-    'Thể thao',
-    'Vintage',
-    'Dự tiệc',
-  ];
+  static const List<String> _allStyles = OutfitService.allStyles;
 
   static const List<String> _allColors = [
     'Xanh dương',
@@ -42,15 +34,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Hồng',
   ];
 
-  Future<void> _editNameDialog(String currentName) async {
-    final updated = await showDialog<String>(
-      context: context,
-      builder: (_) => _EditNameDialog(initialName: currentName),
+  Future<void> _openProfileDetail({bool editMode = false}) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfileDetailScreen(initialEditMode: editMode),
+      ),
     );
-
-    if (updated != null && updated.isNotEmpty) {
-      await DailyFitStore.instance.updateDisplayName(updated);
-    }
   }
 
   Future<void> _retestServices() async {
@@ -78,13 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return 'DF';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final store = DailyFitStore.instance;
@@ -94,6 +77,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bottom: false,
       child: AnimatedBuilder(
         animation: Listenable.merge([
+          store.currentUser,
+          store.isGuestSession,
           store.preferences,
           store.weather,
           store.favorites,
@@ -103,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           clothingService.statusMessage,
         ]),
         builder: (context, _) {
+          final authUser = store.currentUser.value;
           final prefs = store.preferences.value;
           final weather = store.weather.value;
           final isBackendLive =
@@ -113,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Hồ sơ phong cách',
                   style: TextStyle(
                     fontSize: 24,
@@ -123,8 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Cá nhân hóa sở thích thời trang, màu sắc và khu vực thời tiết.',
+                Text(
+                  'Cá nhân hóa sở thích thời trang, màu sắc và giao diện hiển thị.',
                   style: TextStyle(
                     fontSize: 13.5,
                     color: AppColors.textSecondary,
@@ -133,75 +119,131 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 18),
 
-                // Thẻ thông tin người dùng
+                // Thẻ thông tin người dùng (bấm để xem chi tiết SĐT, địa chỉ, email, ảnh đại diện)
                 GlassCard(
                   padding: const EdgeInsets.all(20),
                   enableBlur: false,
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 62,
-                            height: 62,
-                            decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      AppColors.primary.withValues(alpha: 0.25),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                _initials(prefs.displayName),
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.white,
+                      InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => _openProfileDetail(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              UserAvatar(
+                                avatarPath: store.activeAvatarPath,
+                                displayName: store.activeDisplayName,
+                                size: 64,
+                                showCameraBadge: true,
+                                onTap: () => _openProfileDetail(),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      store.activeDisplayName,
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.text,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      authUser != null
+                                          ? '@${authUser.username} · ${authUser.email}'
+                                          : 'Chế độ Khách (Guest)',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      store.activePhone.isNotEmpty ||
+                                              store.activeAddress.isNotEmpty
+                                          ? [
+                                              if (store.activePhone.isNotEmpty)
+                                                store.activePhone,
+                                              if (store
+                                                  .activeAddress.isNotEmpty)
+                                                store.activeAddress,
+                                            ].join(' · ')
+                                          : 'Bấm để xem hồ sơ, SĐT, địa chỉ & ảnh đại diện ›',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
+                              IconButton(
+                                tooltip: 'Xem và chỉnh sửa hồ sơ',
+                                onPressed: () =>
+                                    _openProfileDetail(editMode: true),
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  prefs.displayName,
-                                  style: const TextStyle(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final messenger =
+                                ScaffoldMessenger.maybeOf(context);
+                            final wasLoggedIn = authUser != null;
+                            await store.logout();
+                            if (wasLoggedIn) {
+                              messenger?.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Đã đăng xuất tài khoản thành công.',
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Gu chủ đạo: ${prefs.preferredStyles.join(" · ")}',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                              );
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: authUser != null
+                                ? AppColors.error
+                                : AppColors.primary,
+                            side: BorderSide(
+                              color: (authUser != null
+                                      ? AppColors.error
+                                      : AppColors.primary)
+                                  .withValues(alpha: 0.35),
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Đổi tên hiển thị',
-                            onPressed: () => _editNameDialog(prefs.displayName),
-                            icon: const Icon(
-                              Icons.edit_outlined,
-                              color: AppColors.primary,
-                            ),
+                          icon: Icon(
+                            authUser != null
+                                ? Icons.logout_rounded
+                                : Icons.login_rounded,
+                            size: 18,
                           ),
-                        ],
+                          label: Text(
+                            authUser != null
+                                ? 'Đăng xuất tài khoản'
+                                : 'Đăng nhập / Tạo tài khoản',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -216,14 +258,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
                             Icons.style_rounded,
                             size: 20,
                             color: AppColors.primary,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Phong cách cá nhân',
@@ -237,7 +279,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Các phong cách được chọn sẽ được cộng điểm ưu tiên khi gợi ý đồ.',
                         style: TextStyle(
                           fontSize: 12.5,
@@ -272,14 +314,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
                             Icons.palette_outlined,
                             size: 20,
                             color: AppColors.primary,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Bảng màu yêu thích',
@@ -319,8 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     border: Border.all(
                                       color: selected
                                           ? AppColors.primary
-                                          : Colors.black
-                                              .withValues(alpha: 0.14),
+                                          : AppColors.subtleBorder,
                                       width: selected ? 2.6 : 1.0,
                                     ),
                                     boxShadow: selected
@@ -339,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           Icons.check_rounded,
                                           size: 20,
                                           color: isLightSwatch
-                                              ? AppColors.primary
+                                              ? const Color(0xFF2563EB)
                                               : AppColors.white,
                                         )
                                       : null,
@@ -368,24 +409,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 16),
 
-                // Tùy chọn Khu vực & Nhiệt độ
+                // Tùy chọn Giao diện AMOLED, Khu vực & Nhiệt độ
                 GlassCard(
                   padding: const EdgeInsets.all(18),
                   enableBlur: false,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
-                            Icons.location_on_outlined,
+                            Icons.tune_rounded,
                             size: 20,
                             color: AppColors.primary,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Khu vực & Thời tiết',
+                              'Giao diện, Khu vực & Thời tiết',
                               style: TextStyle(
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.w800,
@@ -395,11 +436,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Chế độ tối AMOLED (Đen sâu)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text,
+                          ),
+                        ),
+                        subtitle: Text(
+                          prefs.isDarkMode
+                              ? 'Đang bật nền đen #000000 tiết kiệm pin màn hình AMOLED'
+                              : 'Đang dùng giao diện Sáng (Blue & White Glass)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        value: prefs.isDarkMode,
+                        activeThumbColor: AppColors.white,
+                        onChanged: (val) {
+                          store.setDarkMode(val);
+                        },
+                      ),
+                      const Divider(height: 16),
+                      const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
-                        key: ValueKey(prefs.city),
+                        key: ValueKey('${prefs.city}_${prefs.isDarkMode}'),
                         initialValue: prefs.city,
                         isExpanded: true,
+                        dropdownColor: AppColors.surface,
+                        style: TextStyle(color: AppColors.text, fontSize: 15),
                         decoration: InputDecoration(
                           labelText: 'Thành phố hiện tại',
                           filled: true,
@@ -424,7 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text(
+                        title: Text(
                           'Hiển thị nhiệt độ theo độ C (°C)',
                           style: TextStyle(
                             fontSize: 14,
@@ -436,13 +506,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           prefs.useCelsius
                               ? 'Đang dùng thang đo Celsius (°C)'
                               : 'Đang dùng thang đo Fahrenheit (°F)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
                             color: AppColors.textMuted,
                           ),
                         ),
                         value: prefs.useCelsius,
-                        activeThumbColor: AppColors.primary,
+                        activeThumbColor: AppColors.white,
                         onChanged: (val) {
                           store.setTemperatureUnit(useCelsius: val);
                         },
@@ -462,13 +532,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.dns_outlined,
                             size: 20,
                             color: AppColors.primary,
                           ),
                           const SizedBox(width: 8),
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Trạng thái Dịch vụ & Tích hợp',
                               style: TextStyle(
@@ -550,7 +620,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text,
@@ -559,7 +629,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   color: AppColors.textMuted,
                 ),
@@ -571,7 +641,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: badgeColor.withValues(alpha: 0.14),
+            color: badgeColor.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
@@ -579,9 +649,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: isHealthy
-                  ? const Color(0xFF047857)
-                  : const Color(0xFFB45309),
+              color:
+                  isHealthy ? AppColors.successText : AppColors.warningText,
             ),
           ),
         ),
@@ -589,70 +658,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
-class _EditNameDialog extends StatefulWidget {
-  final String initialName;
-
-  const _EditNameDialog({
-    required this.initialName,
-  });
-
-  @override
-  State<_EditNameDialog> createState() => _EditNameDialogState();
-}
-
-class _EditNameDialogState extends State<_EditNameDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    Navigator.pop(context, _controller.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      scrollable: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Cập nhật tên hiển thị'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        textInputAction: TextInputAction.done,
-        textCapitalization: TextCapitalization.words,
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          hintText: 'Nhập tên của bạn',
-          filled: true,
-          fillColor: AppColors.background,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Hủy'),
-        ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Lưu'),
-        ),
-      ],
-    );
-  }
-}
-

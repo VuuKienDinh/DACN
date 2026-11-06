@@ -44,10 +44,12 @@ class DailyFitBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(14, 0, 14, bottomInset > 0 ? bottomInset : 12),
+      padding:
+          EdgeInsets.fromLTRB(14, 0, 14, bottomInset > 0 ? bottomInset : 12),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
@@ -56,15 +58,21 @@ class DailyFitBottomNav extends StatelessWidget {
             height: 70,
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.86),
+              color: isDark
+                  ? const Color(0xFF0B1120).withValues(alpha: 0.92)
+                  : AppColors.white.withValues(alpha: 0.86),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: AppColors.white.withValues(alpha: 0.95),
+                color: isDark
+                    ? const Color(0xFF38BDF8).withValues(alpha: 0.22)
+                    : AppColors.white.withValues(alpha: 0.95),
                 width: 1.3,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1E3A8A).withValues(alpha: 0.10),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.65)
+                      : const Color(0xFF1E3A8A).withValues(alpha: 0.10),
                   blurRadius: 28,
                   offset: const Offset(0, 10),
                 ),
@@ -85,7 +93,8 @@ class DailyFitBottomNav extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.primary.withValues(alpha: 0.12)
+                            ? AppColors.primary
+                                .withValues(alpha: isDark ? 0.18 : 0.12)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),

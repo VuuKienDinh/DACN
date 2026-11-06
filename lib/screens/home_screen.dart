@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
@@ -11,8 +13,10 @@ import '../widgets/glass_card.dart';
 import '../widgets/outfit_showcase_card.dart';
 import '../widgets/schedule_outfit_sheet.dart';
 import '../widgets/state_views.dart';
+import '../widgets/user_avatar.dart';
 import '../widgets/weather_banner_card.dart';
 import 'add_clothing_screen.dart';
+import 'user_profile_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int tabIndex, {String? occasion})? onSwitchTab;
@@ -22,15 +26,87 @@ class HomeScreen extends StatefulWidget {
     this.onSwitchTab,
   });
 
+  static String formatVietnameseDate(DateTime date) {
+    const weekdays = <int, String>{
+      DateTime.monday: 'Thứ Hai',
+      DateTime.tuesday: 'Thứ Ba',
+      DateTime.wednesday: 'Thứ Tư',
+      DateTime.thursday: 'Thứ Năm',
+      DateTime.friday: 'Thứ Sáu',
+      DateTime.saturday: 'Thứ Bảy',
+      DateTime.sunday: 'Chủ Nhật',
+    };
+    final weekday = weekdays[date.weekday] ?? 'Hôm nay';
+    return '$weekday, ${date.day} tháng ${date.month}, ${date.year}';
+  }
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _featuredSeed = 0;
+  DateTime _now = DateTime.now();
+  Timer? _clockTimer;
 
-  String _greetingText() {
-    final hour = DateTime.now().hour;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleNextClockSync();
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshNowIfNeeded();
+      _scheduleNextClockSync();
+    }
+  }
+
+  void _refreshNowIfNeeded() {
+    final current = DateTime.now();
+    if (current.year != _now.year ||
+        current.month != _now.month ||
+        current.day != _now.day ||
+        current.hour != _now.hour) {
+      if (mounted) {
+        setState(() => _now = current);
+      }
+    } else {
+      _now = current;
+    }
+  }
+
+  void _scheduleNextClockSync() {
+    _clockTimer?.cancel();
+    // Không đặt Timer chạy ngầm trong môi trường kiểm thử tự động FakeAsync
+    if (WidgetsBinding.instance.runtimeType
+        .toString()
+        .contains('TestWidgetsFlutterBinding')) {
+      return;
+    }
+    final current = DateTime.now();
+    final wait = Duration(
+      seconds: 60 - current.second,
+      milliseconds: 1000 - current.millisecond,
+    );
+    _clockTimer = Timer(wait, () {
+      if (!mounted) return;
+      _refreshNowIfNeeded();
+      _scheduleNextClockSync();
+    });
+  }
+
+  String _greetingText(DateTime now) {
+    final hour = now.hour;
     if (hour < 12) return 'Chào buổi sáng';
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
@@ -41,9 +117,14 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        side: AppColors.isDark
+            ? BorderSide(
+                color: const Color(0xFF38BDF8).withValues(alpha: 0.22),
+              )
+            : BorderSide.none,
       ),
       builder: (ctx) {
         return SafeArea(
@@ -57,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Chọn khu vực thời tiết',
                     style: TextStyle(
                       fontSize: 18,
@@ -83,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       trailing: active
-                          ? const Icon(
+                          ? Icon(
                               Icons.check_circle_rounded,
                               color: AppColors.primary,
                             )
@@ -110,12 +191,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openUserProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const UserProfileDetailScreen()),
+    );
+  }
+
   OutfitSuggestion? _computeFeaturedOutfit(List<ClothingItem> clothes) {
     if (clothes.isEmpty) return null;
     final weather = DailyFitStore.instance.weather.value;
     final prefs = DailyFitStore.instance.preferences.value;
 
-    final hour = DateTime.now().hour;
+    final hour = _now.hour;
     final defaultOccasion =
         (hour >= 7 && hour <= 17) ? 'Đi làm' : 'Đi chơi';
 
@@ -149,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.10),
+                color: AppColors.primary.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 18, color: AppColors.primary),
@@ -157,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
                 color: AppColors.primary,
@@ -169,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textMuted,
@@ -189,6 +277,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bottom: false,
       child: AnimatedBuilder(
         animation: Listenable.merge([
+          store.currentUser,
+          store.isGuestSession,
           store.preferences,
           store.weather,
           store.isLoadingWeather,
@@ -202,14 +292,15 @@ class _HomeScreenState extends State<HomeScreen> {
           final weather = store.weather.value;
           final clothes = ClothingService.instance.items.value;
           final featured = _computeFeaturedOutfit(clothes);
-          final todayPlan = store.getPlanForDate(DateTime.now());
-          final greetingName = prefs.displayName.trim().isEmpty
-              ? 'bạn'
-              : prefs.displayName.trim();
+          final todayPlan = store.getPlanForDate(_now);
+          final activeName = store.activeDisplayName.trim();
+          final greetingName = activeName.isEmpty ? 'bạn' : activeName;
 
           return RefreshIndicator(
             color: AppColors.primary,
+            backgroundColor: AppColors.surface,
             onRefresh: () async {
+              setState(() => _now = DateTime.now());
               await Future.wait([
                 store.refreshWeather(),
                 ClothingService.instance.loadClothes(),
@@ -221,31 +312,19 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Thương hiệu DailyFit
+                  // Header Avatar hồ sơ người dùng + Thương hiệu DailyFit + Nút Sáng / Tối AMOLED
                   Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(13),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome_rounded,
-                          color: AppColors.white,
-                          size: 21,
-                        ),
+                      UserAvatar(
+                        avatarPath: store.activeAvatarPath,
+                        displayName: greetingName,
+                        size: 42,
+                        showOnlineDot: store.currentUser.value != null,
+                        tooltip: 'Xem thông tin hồ sơ cá nhân',
+                        onTap: _openUserProfile,
                       ),
                       const SizedBox(width: 10),
-                      const Text(
+                      Text(
                         'DailyFit',
                         style: TextStyle(
                           fontSize: 24,
@@ -256,27 +335,69 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        tooltip: 'Thêm trang phục nhanh',
-                        onPressed: _openAddClothing,
+                        tooltip: 'Chuyển đổi giao diện Sáng / Tối',
+                        onPressed: store.toggleDarkMode,
                         style: IconButton.styleFrom(
                           backgroundColor:
-                              AppColors.white.withValues(alpha: 0.85),
+                              AppColors.surface.withValues(alpha: 0.92),
+                          side: BorderSide(
+                            color: AppColors.cardBorder,
+                            width: 1.2,
+                          ),
                         ),
-                        icon: const Icon(
-                          Icons.add_a_photo_outlined,
-                          size: 20,
-                          color: AppColors.primary,
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          transitionBuilder: (child, anim) =>
+                              ScaleTransition(scale: anim, child: child),
+                          child: Icon(
+                            prefs.isDarkMode
+                                ? Icons.light_mode_rounded
+                                : Icons.dark_mode_rounded,
+                            key: ValueKey<bool>(prefs.isDarkMode),
+                            size: 21,
+                            color: prefs.isDarkMode
+                                ? const Color(0xFFFBBF24)
+                                : AppColors.primary,
+                          ),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+
+                  // Thứ, ngày tháng năm cập nhật trực tiếp theo thời gian thực
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14.5,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          HomeScreen.formatVietnameseDate(_now),
+                          key: const ValueKey('home_live_date'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
 
                   // Lời chào cá nhân hoá
                   Text(
-                    '${_greetingText()}, $greetingName 👋',
-                    style: const TextStyle(
+                    '${_greetingText(_now)}, $greetingName 👋',
+                    style: TextStyle(
                       fontSize: 23.5,
                       fontWeight: FontWeight.w800,
                       color: AppColors.text,
@@ -284,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Cùng chọn bộ trang phục tự tin và hợp thời tiết nhất hôm nay.',
                     style: TextStyle(
                       fontSize: 14,
@@ -336,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Tiêu đề Bộ đồ nổi bật
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Bộ đồ nổi bật hôm nay',
                           style: TextStyle(
@@ -399,7 +520,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 22),
 
                   // Gợi ý nhanh theo hoàn cảnh
-                  const Text(
+                  Text(
                     'Phối nhanh theo hoàn cảnh',
                     style: TextStyle(
                       fontSize: 18,
@@ -439,10 +560,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
+                              color: AppColors.primary.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.event_available_rounded,
                               color: AppColors.primary,
                             ),
@@ -452,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Lịch mặc hôm nay của bạn',
                                   style: TextStyle(
                                     fontSize: 12,
@@ -465,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   todayPlan.outfit.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.text,
@@ -474,7 +595,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          const Icon(
+                          Icon(
                             Icons.chevron_right_rounded,
                             color: AppColors.textMuted,
                           ),
@@ -490,7 +611,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           outfit: featured,
                         ),
                         icon: const Icon(Icons.calendar_month_rounded),
-                        label: const Text('Lên lịch mặc bộ nổi bật cho hôm nay'),
+                        label:
+                            const Text('Lên lịch mặc bộ nổi bật cho hôm nay'),
                       ),
                     ),
                   ],
@@ -519,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text,

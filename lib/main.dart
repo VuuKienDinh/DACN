@@ -2,25 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/config_url.dart';
+import 'screens/auth_screen.dart';
 import 'screens/main_shell_screen.dart';
 import 'services/api_client.dart';
 import 'services/dailyfit_store.dart';
 import 'theme/app_theme.dart';
+import 'widgets/glass_scaffold.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Cấu hình thanh trạng thái Android trong suốt hiện đại
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
+  AppTheme.applySystemOverlay(isDark: AppColors.isDark);
 
   // Đọc file .env an toàn (không làm văng ứng dụng nếu thiếu .env)
   try {
@@ -57,11 +53,45 @@ class DailyFitApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'DailyFit',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const MainShellScreen(),
+    final store = DailyFitStore.instance;
+    unawaited(store.initialize());
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        store.isReady,
+        store.currentUser,
+        store.isGuestSession,
+        store.preferences,
+      ]),
+      builder: (context, _) {
+        final isDark = store.preferences.value.isDarkMode;
+        AppColors.isDark = isDark;
+
+        Widget home;
+        if (!store.isReady.value) {
+          home = GlassScaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            ),
+          );
+        } else if (store.hasActiveSession) {
+          home = const MainShellScreen();
+        } else {
+          home = const AuthScreen();
+        }
+
+        return MaterialApp(
+          title: 'DailyFit',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+          themeAnimationDuration: Duration.zero,
+          home: home,
+        );
+      },
     );
   }
 }

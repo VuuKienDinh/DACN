@@ -1,0 +1,6 @@
+@DoAnChuyenNganh_HostAddress = http://localhost:5080
+
+GET {{DoAnChuyenNganh_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

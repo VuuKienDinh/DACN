@@ -11,6 +11,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/outfit_showcase_card.dart';
 import '../widgets/schedule_outfit_sheet.dart';
 import '../widgets/state_views.dart';
+import 'clothing_detail_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   final VoidCallback? onOpenRecommendations;
@@ -75,8 +76,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  Future<void> _autoPlanForSelectedDay() async {
-    final store = DailyFitStore.instance;
+  Future<void> _openScheduleForSelectedDay({
+    PlannedOutfit? existingPlan,
+  }) async {
     final clothes = ClothingService.instance.items.value;
     if (clothes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,30 +89,44 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return;
     }
 
-    final isWeekend = _selectedDate.weekday == DateTime.saturday ||
-        _selectedDate.weekday == DateTime.sunday;
-    final occasion = isWeekend ? 'Đi chơi' : 'Đi làm';
+    final store = DailyFitStore.instance;
+    String? preferredOccasion = existingPlan?.occasion;
 
-    final generated = OutfitService.generateOutfits(
-      clothes,
-      occasion,
-      weather: store.weather.value,
-      preferences: store.preferences.value,
-      variationSeed: _selectedDate.day,
-      limit: 1,
-    );
-
-    if (generated.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa đủ quần áo để tự động phối đồ')),
+    if (preferredOccasion == null) {
+      final isWeekend = _selectedDate.weekday == DateTime.saturday ||
+          _selectedDate.weekday == DateTime.sunday;
+      final defaultOcc = isWeekend ? 'Đi chơi' : 'Đi làm';
+      final tryDefault = OutfitService.generateOutfits(
+        clothes,
+        defaultOcc,
+        weather: store.weather.value,
+        preferences: store.preferences.value,
+        limit: 1,
       );
-      return;
+      if (tryDefault.isNotEmpty) {
+        preferredOccasion = defaultOcc;
+      } else {
+        for (final occ in OutfitService.allOccasions) {
+          final check = OutfitService.generateOutfits(
+            clothes,
+            occ,
+            weather: store.weather.value,
+            preferences: store.preferences.value,
+            limit: 1,
+          );
+          if (check.isNotEmpty) {
+            preferredOccasion = occ;
+            break;
+          }
+        }
+      }
     }
 
     await showScheduleOutfitSheet(
       context,
-      outfit: generated.first,
       initialDate: _selectedDate,
+      initialOccasion: preferredOccasion,
+      excludeOutfitId: existingPlan?.outfit.id,
     );
   }
 
@@ -123,6 +139,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       bottom: false,
       child: AnimatedBuilder(
         animation: Listenable.merge([
+          store.preferences,
           store.plannedOutfits,
           store.favorites,
         ]),
@@ -130,6 +147,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
           final plans = store.plannedOutfits.value;
           final favorites = store.favorites.value;
           final selectedPlan = store.getPlanForDate(_selectedDate);
+          final sortedPlans = plans.values.toList()
+            ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
+          final monthPlansCount = sortedPlans.where((p) {
+            final dt = PlannedOutfit.tryParseKey(p.dateKey);
+            return dt != null &&
+                dt.year == _selectedDate.year &&
+                dt.month == _selectedDate.month;
+          }).length;
+          final scheduleSummary = monthPlansCount == plans.length
+              ? 'Tháng ${_selectedDate.month}, ${_selectedDate.year} · ${plans.length} ngày đã lên lịch'
+              : 'Tháng ${_selectedDate.month}, ${_selectedDate.year} · $monthPlansCount ngày trong tháng (Tổng: ${plans.length})';
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 128),
@@ -143,7 +171,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Lịch phối đồ',
                             style: TextStyle(
                               fontSize: 24,
@@ -154,8 +182,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Tháng ${_selectedDate.month}, ${_selectedDate.year} · ${plans.length} ngày đã lên lịch',
-                            style: const TextStyle(
+                            scheduleSummary,
+                            style: TextStyle(
                               fontSize: 13.5,
                               color: AppColors.textSecondary,
                             ),
@@ -244,12 +272,67 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                if (sortedPlans.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 36,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: sortedPlans.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final planItem = sortedPlans[index];
+                        final dt = PlannedOutfit.tryParseKey(planItem.dateKey);
+                        final isCurrent =
+                            dt != null && _isSameDay(dt, _selectedDate);
+                        final dateLabel = dt != null
+                            ? '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}'
+                            : planItem.dateKey;
+
+                        return ActionChip(
+                          visualDensity: VisualDensity.compact,
+                          backgroundColor: isCurrent
+                              ? AppColors.primary.withValues(alpha: 0.16)
+                              : AppColors.surface,
+                          side: BorderSide(
+                            color: isCurrent
+                                ? AppColors.primary
+                                : AppColors.subtleBorder,
+                          ),
+                          avatar: Icon(
+                            planItem.isWorn
+                                ? Icons.check_circle_rounded
+                                : Icons.event_available_rounded,
+                            size: 15,
+                            color: planItem.isWorn
+                                ? AppColors.success
+                                : AppColors.primary,
+                          ),
+                          label: Text(
+                            '$dateLabel · ${planItem.occasion}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight:
+                                  isCurrent ? FontWeight.w800 : FontWeight.w600,
+                              color:
+                                  isCurrent ? AppColors.primary : AppColors.text,
+                            ),
+                          ),
+                          onPressed: dt == null
+                              ? null
+                              : () => setState(() => _selectedDate = dt),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 18),
 
                 // Kế hoạch cho ngày đang chọn
                 Text(
                   _fullDateTitle(_selectedDate),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text,
@@ -264,7 +347,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     subtitle:
                         'Tạo nhanh một gợi ý phù hợp hoặc chọn một bộ đồ từ mục Yêu thích bên dưới.',
                     actionLabel: 'Gợi ý & lên lịch cho ngày này',
-                    onAction: _autoPlanForSelectedDay,
+                    onAction: () => _openScheduleForSelectedDay(),
                   )
                 else
                   _buildPlannedDayCard(selectedPlan),
@@ -277,7 +360,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Expanded(
                       child: Text(
                         'Bộ đồ yêu thích (${favorites.length})',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.text,
@@ -346,12 +429,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: AppColors.primary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   plan.occasion,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
@@ -366,15 +449,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.14),
+                    color: AppColors.success.withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Đã mặc',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF047857),
+                      color: AppColors.successText,
                     ),
                   ),
                 ),
@@ -398,7 +481,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           const SizedBox(height: 6),
           Text(
             plan.outfit.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
               color: AppColors.text,
@@ -408,7 +491,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const SizedBox(height: 4),
             Text(
               'Ghi chú: ${plan.note}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 fontStyle: FontStyle.italic,
@@ -424,31 +507,43 @@ class _CalendarScreenState extends State<CalendarScreen> {
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, idx) {
                 final item = plan.outfit.items[idx];
-                return Column(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: SizedBox(
-                        width: 84,
-                        height: 84,
-                        child: buildClothingImage(item.imagePath),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ClothingDetailScreen(initialItem: item),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 84,
-                      child: Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: buildClothingImage(item.imagePath),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: 84,
+                        child: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -460,12 +555,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 13,
+                      horizontal: 8,
+                      vertical: 12,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  onPressed: _autoPlanForSelectedDay,
-                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                  onPressed: () =>
+                      _openScheduleForSelectedDay(existingPlan: plan),
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 17),
                   label: const Text(
                     'Đổi bộ khác',
                     maxLines: 1,
@@ -478,8 +578,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 13,
+                      horizontal: 8,
+                      vertical: 12,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   onPressed: () => store.togglePlanWorn(_selectedDate),
@@ -487,7 +591,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     plan.isWorn
                         ? Icons.check_circle_rounded
                         : Icons.check_circle_outline_rounded,
-                    size: 18,
+                    size: 17,
                   ),
                   label: Text(
                     plan.isWorn ? 'Đã mặc' : 'Mặc hôm nay',
@@ -503,4 +607,3 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
-

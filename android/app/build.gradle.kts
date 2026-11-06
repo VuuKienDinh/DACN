@@ -47,3 +47,33 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Tự động mở cầu nối USB (adb reverse tcp:5080 tcp:5080) mỗi khi bấm Run trên máy thật
+val adbExecutableProvider = androidComponents.sdkComponents.adb
+val setupAdbReverse by tasks.registering {
+    outputs.upToDateWhen { false }
+    doLast {
+        runCatching {
+            val adbPath = adbExecutableProvider.get().asFile.absolutePath
+            val listProc = ProcessBuilder(adbPath, "devices").redirectErrorStream(true).start()
+            val output = listProc.inputStream.bufferedReader().readText()
+            listProc.waitFor()
+
+            output.lineSequence().drop(1).forEach { line ->
+                val parts = line.trim().split(Regex("\\s+"))
+                if (parts.size >= 2 && parts[1] == "device" && !parts[0].startsWith("emulator-")) {
+                    ProcessBuilder(adbPath, "-s", parts[0], "reverse", "tcp:5080", "tcp:5080")
+                        .redirectErrorStream(true)
+                        .start()
+                        .waitFor()
+                }
+            }
+        }
+    }
+}
+
+tasks.matching {
+    it.name == "assembleDebug" || it.name == "assembleProfile" || it.name == "assembleRelease"
+}.configureEach {
+    dependsOn(setupAdbReverse)
+}
